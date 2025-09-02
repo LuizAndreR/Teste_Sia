@@ -8,69 +8,106 @@ from src import fetcher
 from src import processor
 from src import sentiment_analyzer
 
-st.set_page_config(page_title="Dashboard AI Piauí", layout="wide")
-st.title("Dashboard: Notícias sobre Inteligência Artificial no Piauí")
+st.set_page_config(page_title="Analisador de Notícias", layout="wide")
+st.title("Analisador de Notícias sobre Inteligência Artificial no Piauí")
 
-# --- Passo 1: Coletar notícias ---
-st.sidebar.header("Configurações")
+st.sidebar.header("Configurações de Busca")
 num_news = st.sidebar.slider("Número de notícias", min_value=5, max_value=50, value=15, step=5)
 
 try:
-    df_raw = fetcher.fetch_news(limit=num_news)
+  df_raw = fetcher.fetch_news(limit=num_news)
 except Exception as e:
-    st.error(f"Erro ao buscar notícias: {e}")
-    st.stop()
+  st.error(f"Erro ao buscar notícias: {e}")
+  st.stop()
 
-# --- Passo 2: Processar notícias ---
 try:
-    df_processed = processor.process_news_dataframe(df_raw)
+  df_processed = processor.process_news_dataframe(df_raw)
 except Exception as e:
-    st.warning(f"Nenhuma notícia válida: {e}")
-    st.stop()
+  st.warning(f"Nenhuma notícia válida: {e}")
+  st.stop()
 
-# --- Passo 3: Analisar sentimento ---
 df_sentiment, sentiment_summary = sentiment_analyzer.analyze_sentiment(df_processed)
 
-# --- Passo 4: Exibir gráfico de pizza ---
-st.subheader("Distribuição de Sentimentos")
-fig_pie = px.pie(
-    sentiment_summary, 
-    names="Sentimento", 
-    values="Quantidade",
-    color="Sentimento", 
-    color_discrete_map={"Positivo": "green", "Negativo": "red", "Neutro": "gray"}
-)
-st.plotly_chart(fig_pie, use_container_width=True)
+# Converter coluna de data para datetime
+df_sentiment["Data de Publicação"] = pd.to_datetime(df_sentiment["Data de Publicação"])
 
-# --- Passo 5: Nuvem de palavras ---
-st.subheader("Nuvem de palavras")
-# Usar função do processor que retorna lista limpa de palavras
-words = processor.extract_words(df_processed)
-frequencies = processor.get_word_frequencies(words)
+st.subheader("Filtros de visualização")
+col_date_start, col_date_end, col_sentiment = st.columns(3)
 
-wordcloud = WordCloud(
-    width=800,
-    height=400,
-    background_color="white",
-    colormap="viridis"
-).generate_from_frequencies(frequencies)
-
-fig, ax = plt.subplots(figsize=(12,6))
-ax.imshow(wordcloud, interpolation="bilinear")
-ax.axis("off")
-st.pyplot(fig)
-
-# --- Passo 6: Tabela interativa ---
-st.subheader("Notícias Processadas e Classificadas")
-st.dataframe(df_sentiment)
-
-# --- Passo 7 (opcional): filtro por sentimento ---
-st.subheader("Filtrar notícias por sentimento")
-sentiment_filter = st.multiselect(
-    "Selecione o(s) sentimento(s) para exibir:",
+with col_date_start:
+  start_date = st.date_input(
+    "Data inicial", df_sentiment["Data de Publicação"].min().date()
+  )
+with col_date_end:
+  end_date = st.date_input(
+    "Data final", df_sentiment["Data de Publicação"].max().date()
+  )
+with col_sentiment:
+  selected_sentiments = st.multiselect(
+    "Sentimento",
     options=["Positivo", "Negativo", "Neutro"],
     default=["Positivo", "Negativo", "Neutro"]
+  )
+
+# Filtrar usando .dt.date
+df_filtered = df_sentiment[
+  (df_sentiment["Data de Publicação"].dt.date >= start_date) &
+  (df_sentiment["Data de Publicação"].dt.date <= end_date) &
+  (df_sentiment["Sentimento"].isin(selected_sentiments))
+]
+
+st.subheader("Tabela de Notícias")
+st.dataframe(df_filtered)
+
+st.subheader("Visualizações")
+col1, col2 = st.columns([2, 1])
+
+with col1:
+  st.write("Nuvem de Palavras")
+  words = processor.extract_words(df_filtered)
+  frequencies = processor.get_word_frequencies(words)
+  if frequencies:
+    wordcloud = WordCloud(
+      width=800, height=400, background_color="white", colormap="viridis"
+    ).generate_from_frequencies(frequencies)
+    fig, ax = plt.subplots(figsize=(12,6))
+    ax.imshow(wordcloud, interpolation="bilinear")
+    ax.axis("off")
+    st.pyplot(fig)
+  else:
+    st.write("Sem palavras para exibir.")
+
+with col2:
+  st.write("Distribuição de Sentimentos")
+  if not df_filtered.empty:
+    summary_filtered = df_filtered["Sentimento"].value_counts().reset_index()
+    summary_filtered.columns = ["Sentimento", "Quantidade"]
+    fig_pie = px.pie(
+      summary_filtered,
+      names="Sentimento",
+      values="Quantidade",
+      color="Sentimento",
+      color_discrete_map={"Positivo": "green", "Negativo": "red", "Neutro": "gray"},
+      title="Sentimentos das Notícias"
+    )
+    st.plotly_chart(fig_pie, use_container_width=True)
+  else:
+    st.write("Sem dados para exibir.")
+
+df_filtered["AnoMes"] = df_filtered["Data de Publicação"].dt.to_period("M").astype(str)
+df_monthly = df_filtered.groupby("AnoMes").size().reset_index(name="Quantidade")
+
+fig_line = px.line(
+  df_monthly,
+  x="AnoMes",
+  y="Quantidade",
+  title="Quantidade de Notícias por Mês",
+  markers=True
 )
 
-df_filtered = df_sentiment[df_sentiment["Sentimento"].isin(sentiment_filter)]
-st.dataframe(df_filtered)
+fig_line.update_layout(
+  xaxis_title="Mês", 
+  yaxis_title="Quantidade de Notícias"
+)
+
+st.plotly_chart(fig_line, use_container_width=True)

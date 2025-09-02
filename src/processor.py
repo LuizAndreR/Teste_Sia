@@ -61,7 +61,7 @@ STOPWORDS_PT = {
   "de", "do", "da", "dos", "das",
   "em", "no", "na", "nos", "nas",
   "e", "que", "que", "por", "com", "para", "se", "ao", "à",
-  "mais", "não", "ou", "como", "já", "são", "foi", "ser", "uso", "rafael", 
+  "mais", "não", "ou", "como", "já", "são", "foi", "ser", "uso" 
 }
 
 def extract_words(df: pd.DataFrame, column: str = "Descrição") -> list:
