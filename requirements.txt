@@ -3,5 +3,6 @@ requests
 feedparser
 pandas
 textblob
-textblob
 plotly
+matplotlib
+wordcloud
