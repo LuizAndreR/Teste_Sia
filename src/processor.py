@@ -89,16 +89,22 @@ def get_word_frequencies(words: list) -> dict:
   return dict(Counter(words))
 
 
-def dataframe_to_json(df: pd.DataFrame, filename: str = "dados.json", orient: str = "records", indent: int = 2):
 
+def dataframe_to_json(df: pd.DataFrame, filename: str = "dados.json", orient: str = "records", indent: int = 2):
+  # Verifica se o DataFrame está vazio, se sim, lança um erro
   if df.empty:
     raise ValueError("O DataFrame está vazio. Nada para salvar.")
   
+  # Define o diretório onde o arquivo será salvo
   output_dir = "dados"
+  # Cria a pasta "dados" caso ela não exista
   os.makedirs(output_dir, exist_ok=True)
 
+  # Define o caminho completo do arquivo (pasta + nome do arquivo)
   filepath = os.path.join(output_dir, filename)
   
+  # Converte o DataFrame para string JSON com formatação
   json_str = df.to_json(orient=orient, force_ascii=False, indent=indent)
+  # Abre o arquivo em modo escrita e salva o JSON dentro dele
   with open(filepath, "w", encoding="utf-8") as f:
     f.write(json_str)
