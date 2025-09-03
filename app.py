@@ -145,3 +145,17 @@ fig_line.update_layout(
 )
 
 st.plotly_chart(fig_line, use_container_width=True)
+
+# --- Rodapé com aviso sobre limitações e uso de IA ---
+st.markdown("---")  # Linha separadora
+st.markdown(
+
+  """"
+  <div style="font-size:15px; color:white;">
+  ⚠️ Esta análise de sentimento é baseada em regras simples e pode não capturar sarcasmo ou contextos complexos.<br>
+  ℹ️ Alguns códigos, como os comentários detalhados explicando cada função, organização e classificação dos dados e o design do dashboard, foram desenvolvidos com auxílio de modelos de IA.
+  </div>
+  """,
+
+  unsafe_allow_html=True
+)
