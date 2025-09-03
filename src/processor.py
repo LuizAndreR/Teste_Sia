@@ -3,22 +3,6 @@ import re
 from html import unescape
 from collections import Counter
 
-# --- Função para limpar o texto de uma notícia ---
-def clean_text(text: str) -> str:
-  if not isinstance(text, str):
-      return ""
-  text = unescape(text)  # Converte entidades HTML (&amp; -> &)
-  text = re.sub(r'http\S+|www\.\S+', '', text)  # Remove URLs simples
-  text = re.sub(  # Remove links mais complexos (https, .com, .gov etc)
-    r'\b(?:https?://|www\.)\S+|(?:\S+\.(?:com|org|net|gov|gov\.br|edu|edu\.br))\b', 
-    '', 
-    text, 
-    flags=re.IGNORECASE
-  )
-  text = re.sub(r'<.*?>', '', text)  # Remove tags HTML
-  text = re.sub(r'\s+', ' ', text).strip()  # Remove espaços extras
-  return text
-
 # --- Função para processar o DataFrame de notícias ---
 def process_news_dataframe(df: pd.DataFrame) -> pd.DataFrame:
   if df.empty:
@@ -48,7 +32,7 @@ def process_news_dataframe(df: pd.DataFrame) -> pd.DataFrame:
 
   # Se depois de tudo não sobrar nada, gera erro
   if df_copy.empty:
-      raise Exception("Nenhuma notícia com uma descrição válida foi encontrada.")
+    raise Exception("Nenhuma notícia com uma descrição válida foi encontrada.")
   
   # Mantém apenas colunas finais relevantes
   final_columns = [
@@ -60,6 +44,24 @@ def process_news_dataframe(df: pd.DataFrame) -> pd.DataFrame:
   df_copy = df_copy[final_columns]
 
   return df_copy
+
+# --- Função para limpar o texto de uma notícia ---
+def clean_text(text: str) -> str:
+  if not isinstance(text, str):
+      return ""
+  text = unescape(text)  # Converte entidades HTML (&amp; -> &)
+  text = re.sub(r'http\S+|www\.\S+', '', text)  # Remove URLs simples
+  text = re.sub(  # Remove links mais complexos (https, .com, .gov etc)
+    r'\b(?:https?://|www\.)\S+|(?:\S+\.(?:com|org|net|gov|gov\.br|edu|edu\.br))\b', 
+    '', 
+    text, 
+    flags=re.IGNORECASE
+  )
+  text = re.sub(r'<.*?>', '', text)  # Remove tags HTML
+  text = re.sub(r'\s+', ' ', text).strip()  # Remove espaços extras
+  return text
+
+
 
 # --- Lista de stopwords em português ---
 STOPWORDS_PT = {
