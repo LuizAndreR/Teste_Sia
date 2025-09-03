@@ -28,10 +28,13 @@ Antes de começar, certifique-se de ter instalado:
   Teste_Sia/
   ├── app.py                  # Dashboard principal (Streamlit)
   ├── requirements.txt        # Lista de dependências do projeto
+  ├── dados/                  # Lista de dados coletados e processados em json
   ├── src/
   │   ├── fetcher.py          # Módulo de busca de notícias
   │   ├── processor.py        # Processamento e limpeza dos textos
   │   └── sentiment_analyzer.py  # Análise de sentimentos
+  ├── words_feeling.json      # Lista de palavra positiva e negativa para classificação 
+  ├── DECISIONS.md 
   └── README.md
 ```
 
